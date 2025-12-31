@@ -1,1 +1,2020 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Search Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        /* Header wrapper */
+        .header-wrapper {
+            width: 100%;
+            background-color: #1a1a1a;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background-color: #1a1a1a;
+            color: white;
+            border-bottom: 1px solid #333;
+            min-width: 320px;
+            width: 100%;
+        }
+        
+        /* Logo/Brand */
+        .brand {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-right: 16px;
+            min-width: 60px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        
+        .brand-top {
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1;
+            letter-spacing: 0.5px;
+        }
+        
+        .brand-bottom {
+            font-size: 11px;
+            font-weight: 300;
+            color: #aaa;
+            line-height: 1;
+            margin-top: 1px;
+        }
+        
+        /* Search container */
+        .search-container {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+            position: relative;
+        }
+        
+        /* Input wrapper untuk menempatkan button di dalam input */
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px 75px 10px 12px; /* Extra padding di kanan untuk buttons */
+            border: 1px solid #444;
+            border-radius: 4px 0 0 4px;
+            background-color: #2d2d2d;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            min-width: 0;
+            width: 100%;
+        }
+        
+        .search-input:focus {
+            border-color: #666;
+            background-color: #333;
+        }
+        
+        .search-input::placeholder {
+            color: #888;
+        }
+        
+        /* Random keyword button di dalam input */
+        .random-keyword-btn {
+            position: absolute;
+            right: 40px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .random-keyword-btn:hover {
+            color: #4a6fa5;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .random-keyword-btn.active {
+            color: #4a6fa5;
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        /* Clear input button di dalam input */
+        .clear-input-btn {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .clear-input-btn.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .clear-input-btn:hover {
+            color: #ff6b6b;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Tooltip untuk random button */
+        .random-tooltip {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 5px;
+            background-color: #222;
+            color: #ddd;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 100;
+            border: 1px solid #444;
+        }
+        
+        .random-keyword-btn:hover .random-tooltip {
+            display: block;
+        }
+        
+        .icon-btn {
+            background-color: #333;
+            color: white;
+            border: 1px solid #444;
+            border-left: none;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+            height: 100%;
+        }
+        
+        .icon-btn:hover {
+            background-color: #444;
+        }
+        
+        .light-btn {
+            border-radius: 0;
+            position: relative;
+        }
+        
+        .light-btn.active {
+            background-color: #555;
+        }
+        
+        .settings-btn {
+            border-radius: 0 4px 4px 0;
+            position: relative;
+        }
+        
+        .settings-btn.active {
+            background-color: #555;
+        }
+        
+        /* Auto-complete suggestions panel */
+        .autocomplete-panel {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 999;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .autocomplete-panel.active {
+            display: block;
+        }
+        
+        .autocomplete-item {
+            padding: 10px 12px;
+            color: #ddd;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+        
+        .autocomplete-item:hover {
+            background-color: #333;
+        }
+        
+        .autocomplete-item .keyword {
+            font-weight: 500;
+        }
+        
+        .autocomplete-item .hint {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .no-suggestions {
+            padding: 15px 12px;
+            color: #888;
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 90%;
+            max-width: 400px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .settings-panel.active {
+            display: block;
+        }
+        
+        .settings-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #444;
+            background-color: #222;
+        }
+        
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .settings-content {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        /* Settings Form */
+        .settings-form {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        
+        .settings-group {
+            margin-bottom: 15px;
+        }
+        
+        .settings-label {
+            display: block;
+            font-size: 13px;
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+        
+        .settings-input {
+            width: 100%;
+            padding: 8px 10px;
+            background-color: #444;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .settings-input:focus {
+            outline: none;
+            border-color: #666;
+        }
+        
+        .settings-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        
+        /* Auto-generated Links Section */
+        .links-section {
+            padding: 20px;
+            background-color: white;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .links-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .links-title::before {
+            content: "🔗";
+        }
+        
+        .links-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .search-link {
+            display: block;
+            padding: 12px 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+            overflow: hidden;
+        }
+        
+        .search-link:hover {
+            background-color: #e9ecef;
+            border-color: #4a6fa5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .link-engine {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .link-query {
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a6fa5;
+            word-break: break-word;
+        }
+        
+        .no-links {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-size: 14px;
+            grid-column: 1 / -1;
+        }
+        
+        /* Panel (Sources & Keywords) */
+        .panel {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 90%;
+            max-width: 450px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1001;
+            overflow: hidden;
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        .panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #444;
+            background-color: #222;
+        }
+        
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background-color: #222;
+            border-bottom: 1px solid #444;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab:hover {
+            color: #ddd;
+            background-color: #2a2a2a;
+        }
+        
+        .tab.active {
+            color: #4a6fa5;
+            border-bottom: 2px solid #4a6fa5;
+            background-color: #2a2a2a;
+        }
+        
+        /* Tab content */
+        .tab-content {
+            padding: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            padding: 20px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            color: #ddd;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        /* Source Input Form */
+        .source-form, .keyword-form {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 13px;
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 8px 10px;
+            background-color: #444;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #666;
+        }
+        
+        .form-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #4a6fa5;
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a7fb5;
+        }
+        
+        .btn-secondary {
+            background-color: #555;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #666;
+        }
+        
+        /* File Upload */
+        .file-upload {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #444;
+        }
+        
+        .file-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .file-label {
+            font-size: 13px;
+            color: #ccc;
+        }
+        
+        .file-input {
+            flex: 1;
+            padding: 6px 10px;
+            background-color: #444;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #ccc;
+            font-size: 13px;
+        }
+        
+        /* Sources List */
+        .sources-list, .keywords-list {
+            background-color: #333;
+            border-radius: 6px;
+            overflow: hidden;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .source-item, .keyword-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .source-item:last-child, .keyword-item:last-child {
+            border-bottom: none;
+        }
+        
+        .source-info, .keyword-info {
+            flex: 1;
+        }
+        
+        .source-name, .keyword-text {
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+        
+        .source-url {
+            color: #aaa;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        
+        .keyword-date {
+            color: #888;
+            font-size: 11px;
+        }
+        
+        .source-actions, .keyword-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .source-btn, .keyword-btn {
+            background: none;
+            border: 1px solid #555;
+            color: #ccc;
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        
+        .source-btn:hover, .keyword-btn:hover {
+            background-color: #444;
+        }
+        
+        .source-btn.delete, .keyword-btn.delete {
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 12px;
+            }
+            
+            .brand {
+                margin-right: 12px;
+                min-width: 50px;
+            }
+            
+            .brand-top,
+            .brand-bottom {
+                font-size: 10px;
+            }
+            
+            .search-input {
+                padding: 8px 65px 8px 10px;
+                font-size: 13px;
+            }
+            
+            .random-keyword-btn {
+                right: 35px;
+                font-size: 14px;
+                width: 20px;
+                height: 20px;
+            }
+            
+            .clear-input-btn {
+                right: 6px;
+                font-size: 12px;
+                width: 20px;
+                height: 20px;
+            }
+            
+            .icon-btn {
+                padding: 8px 10px;
+                font-size: 15px;
+            }
+            
+            .panel, .settings-panel {
+                width: calc(100% - 20px);
+                right: 10px;
+                left: 10px;
+                top: 65px;
+            }
+            
+            .tab-content.active, .settings-content {
+                padding: 15px;
+                max-height: 50vh;
+            }
+            
+            .sources-list, .keywords-list {
+                max-height: 150px;
+            }
+            
+            .links-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .autocomplete-panel {
+                max-height: 150px;
+            }
+        }
+        
+        /* Tablet and desktop styles */
+        @media (min-width: 768px) {
+            .header {
+                padding: 12px 20px;
+            }
+            
+            .brand {
+                margin-right: 20px;
+                min-width: 70px;
+            }
+            
+            .brand-top,
+            .brand-bottom {
+                font-size: 12px;
+            }
+            
+            .search-input {
+                max-width: 500px;
+            }
+            
+            .panel {
+                right: 20px;
+                width: 450px;
+            }
+            
+            .settings-panel {
+                right: 20px;
+                width: 400px;
+            }
+        }
+        
+        /* Overlay */
+        .panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 999;
+            display: none;
+            background-color: transparent;
+        }
+        
+        .panel-overlay.active {
+            display: block;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #888;
+            font-size: 14px;
+        }
+        
+        /* Notification - Dipindah ke bawah */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4a6fa5;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1002;
+            animation: slideUp 0.3s ease-out;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Demo content */
+        .content {
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .content h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        /* Instructions */
+        .instructions {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .instructions h3 {
+            color: #4a6fa5;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        /* Fix spacing for default input */
+        .query-display {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-wrapper">
+        <header class="header">
+            <div class="brand">
+                <div class="brand-top">search</div>
+                <div class="brand-bottom">engine</div>
+            </div>
+            
+            <div class="search-container">
+                <div class="input-wrapper">
+                    <input type="text" class="search-input" placeholder="Search the web..." id="searchInput">
+                    <button class="random-keyword-btn" id="randomKeywordBtn" title="Add random keyword">
+                        <span>✦</span>
+                        <span class="random-tooltip">Add random keyword</span>
+                    </button>
+                    <button class="clear-input-btn" id="clearInputBtn" title="Clear input">
+                        <span>×</span>
+                    </button>
+                    
+                    <!-- Auto-complete panel -->
+                    <div class="autocomplete-panel" id="autocompletePanel">
+                        <!-- Suggestions will appear here -->
+                    </div>
+                </div>
+                <button class="icon-btn light-btn" title="Manage search sources" id="lightBtn">
+                    💡
+                </button>
+                <button class="icon-btn settings-btn" title="Settings" id="settingsBtn">
+                    ⚙️
+                </button>
+            </div>
+        </header>
+    </div>
+    
+    <!-- Sources & Keywords Panel -->
+    <div class="panel" id="sourcesPanel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <span>💡</span> Search Manager
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="sources">Sources</button>
+            <button class="tab" data-tab="keywords">Keywords</button>
+        </div>
+        
+        <!-- Sources Tab -->
+        <div class="tab-content active" id="sourcesTab">
+            <!-- Add Source Form -->
+            <div class="source-form">
+                <div class="section-title">Add New Search Engine</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Engine Name</label>
+                    <input type="text" class="form-input" id="engineName" placeholder="e.g., Google">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Search URL</label>
+                    <input type="text" class="form-input" id="engineUrl" placeholder="https://example.com?q={query}">
+                    <div class="form-hint">Use {query} as placeholder for search terms</div>
+                </div>
+                
+                <div class="form-actions">
+                    <button class="btn btn-primary" id="addSourceBtn">Add Engine</button>
+                    <button class="btn btn-secondary" id="clearSourceFormBtn">Clear</button>
+                </div>
+            </div>
+            
+            <!-- File Upload -->
+            <div class="file-upload">
+                <div class="section-title">Import from File</div>
+                <div class="file-input-wrapper">
+                    <input type="file" class="file-input" id="sourceFile" accept=".txt,.json">
+                    <button class="btn btn-secondary" id="uploadBtn">Upload</button>
+                </div>
+                <div class="form-hint">
+                    <strong>JSON format:</strong> {"name": "Engine Name", "url": "https://example.com?q={query}"}<br>
+                    <strong>TXT format:</strong> Engine Name - https://example.com?q={query}
+                </div>
+            </div>
+            
+            <!-- Sources List -->
+            <div style="margin-top: 20px;">
+                <div class="section-title">Available Search Engines</div>
+                <div class="sources-list" id="sourcesList">
+                    <!-- Sources will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Keywords Tab -->
+        <div class="tab-content" id="keywordsTab">
+            <!-- Add Keyword Form -->
+            <div class="keyword-form">
+                <div class="section-title">Add New Keyword</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Keyword</label>
+                    <input type="text" class="form-input" id="keywordInput" placeholder="e.g., programming, recipes, news">
+                    <div class="form-hint">Add keywords for quick search access</div>
+                </div>
+                
+                <div class="form-actions">
+                    <button class="btn btn-primary" id="addKeywordBtn">Add Keyword</button>
+                    <button class="btn btn-secondary" id="clearKeywordFormBtn">Clear</button>
+                </div>
+            </div>
+            
+            <!-- Keywords List -->
+            <div style="margin-top: 20px;">
+                <div class="section-title">Saved Keywords</div>
+                <div class="keywords-list" id="keywordsList">
+                    <!-- Keywords will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <div class="settings-title">
+                <span>⚙️</span> Settings
+            </div>
+        </div>
+        
+        <div class="settings-content">
+            <div class="settings-form">
+                <div class="settings-group">
+                    <label class="settings-label">Default Search Text</label>
+                    <input type="text" class="settings-input" id="defaultInput" placeholder="e.g., makan ">
+                    <div class="settings-hint">
+                        This text will be automatically prepended to your search queries.<br>
+                        <strong>Note:</strong> Make sure to include a space at the end if needed.<br>
+                        Example: If default is "makan " and you type "nasi", the actual query will be "makan nasi"
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <label class="settings-label">Auto-add space after default text</label>
+                    <select class="settings-input" id="autoSpace">
+                        <option value="auto">Auto (add space if missing)</option>
+                        <option value="always">Always add space</option>
+                        <option value="never">Never add space</option>
+                    </select>
+                    <div class="settings-hint">
+                        Controls whether to automatically add a space between default text and your query
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+                    <button class="btn btn-secondary" id="resetSettingsBtn">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Overlay -->
+    <div class="panel-overlay" id="panelOverlay"></div>
+    
+    <!-- Notification - Dipindah ke bawah -->
+    <div class="notification" id="notification"></div>
+    
+    <!-- Auto-generated Links Section -->
+    <div class="links-section" id="linksSection">
+        <div class="links-title">Quick Search Links</div>
+        <div class="links-container" id="linksContainer">
+            <!-- Auto-generated links will appear here -->
+        </div>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="content">
+        <div class="instructions">
+            <h3>How to Use This Search Engine</h3>
+            <ul>
+                <li><strong>Search Input</strong>: Type your query and press Enter to search with the default engine (Gibiru)</li>
+                <li><strong>✦ Button</strong>: Add a random keyword from your saved keywords to the search query</li>
+                <li><strong>× Button</strong>: Clear the search input (appears when input has text)</li>
+                <li><strong>Auto-complete</strong>: Get keyword suggestions as you type</li>
+                <li><strong>💡 Button</strong>: Open the Search Manager to add/remove search engines and keywords</li>
+                <li><strong>⚙️ Button</strong>: Open Settings to configure default search behavior</li>
+                <li><strong>Auto-generated Links</strong>: Links are automatically created for each search engine with your current query</li>
+                <li><strong>Example</strong>: With default input "makan " and query "nasi", actual search will be "makan nasi"</li>
+            </ul>
+        </div>
+        
+        <h2>Enhanced Search Engine with New Features</h2>
+        <p><strong>New improvements:</strong></p>
+        <ol>
+            <li><strong>Fixed spacing issue</strong>: Default text now properly adds space before query</li>
+            <li><strong>Clear input button (×)</strong>: Quickly clear the search input</li>
+            <li><strong>Auto-complete suggestions</strong>: Get keyword suggestions as you type</li>
+            <li><strong>Smart space handling</strong>: Options to control automatic space addition</li>
+            <li><strong>Enhanced Settings</strong>: More control over default text behavior</li>
+        </ol>
+    </div>
+    
+    <script>
+        // Local Storage Keys
+        const STORAGE_KEYS = {
+            SOURCES: 'searchEngine_sources',
+            KEYWORDS: 'searchEngine_keywords',
+            SETTINGS: 'searchEngine_settings'
+        };
+        
+        // Load data from local storage
+        function loadSources() {
+            const saved = localStorage.getItem(STORAGE_KEYS.SOURCES);
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            // Default sources
+            return [
+                {
+                    name: "Gibiru",
+                    url: "https://gibiru.com/results.html?q={query}",
+                    type: "default"
+                },
+                {
+                    name: "DuckDuckGo",
+                    url: "https://duckduckgo.com/?q={query}",
+                    type: "default"
+                },
+                {
+                    name: "Google",
+                    url: "https://www.google.com/search?q={query}",
+                    type: "default"
+                }
+            ];
+        }
+        
+        function loadKeywords() {
+            const saved = localStorage.getItem(STORAGE_KEYS.KEYWORDS);
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            // Default keywords
+            return [
+                { text: "programming", date: new Date().toLocaleDateString() },
+                { text: "recipes", date: new Date().toLocaleDateString() },
+                { text: "news", date: new Date().toLocaleDateString() },
+                { text: "music", date: new Date().toLocaleDateString() },
+                { text: "movies", date: new Date().toLocaleDateString() },
+                { text: "sports", date: new Date().toLocaleDateString() },
+                { text: "technology", date: new Date().toLocaleDateString() },
+                { text: "health", date: new Date().toLocaleDateString() },
+                { text: "travel", date: new Date().toLocaleDateString() },
+                { text: "education", date: new Date().toLocaleDateString() }
+            ];
+        }
+        
+        function loadSettings() {
+            const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            // Default settings
+            return {
+                defaultInput: "",
+                autoSpace: "auto" // auto, always, never
+            };
+        }
+        
+        // Save data to local storage
+        function saveSources() {
+            localStorage.setItem(STORAGE_KEYS.SOURCES, JSON.stringify(searchSources));
+            generateSearchLinks(); // Regenerate links when sources change
+        }
+        
+        function saveKeywords() {
+            localStorage.setItem(STORAGE_KEYS.KEYWORDS, JSON.stringify(keywords));
+        }
+        
+        function saveSettings() {
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+        }
+        
+        // Initialize data
+        let searchSources = loadSources();
+        let keywords = loadKeywords();
+        let settings = loadSettings();
+        
+        // DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const lightBtn = document.getElementById('lightBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const sourcesPanel = document.getElementById('sourcesPanel');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const panelOverlay = document.getElementById('panelOverlay');
+        const randomKeywordBtn = document.getElementById('randomKeywordBtn');
+        const clearInputBtn = document.getElementById('clearInputBtn');
+        const notification = document.getElementById('notification');
+        const linksContainer = document.getElementById('linksContainer');
+        const autocompletePanel = document.getElementById('autocompletePanel');
+        
+        // Settings elements
+        const defaultInput = document.getElementById('defaultInput');
+        const autoSpaceSelect = document.getElementById('autoSpace');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+        
+        // Sources Tab elements
+        const engineNameInput = document.getElementById('engineName');
+        const engineUrlInput = document.getElementById('engineUrl');
+        const addSourceBtn = document.getElementById('addSourceBtn');
+        const clearSourceFormBtn = document.getElementById('clearSourceFormBtn');
+        const sourceFileInput = document.getElementById('sourceFile');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const sourcesList = document.getElementById('sourcesList');
+        
+        // Keywords Tab elements
+        const keywordInput = document.getElementById('keywordInput');
+        const addKeywordBtn = document.getElementById('addKeywordBtn');
+        const clearKeywordFormBtn = document.getElementById('clearKeywordFormBtn');
+        const keywordsList = document.getElementById('keywordsList');
+        
+        // Tab elements
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Variables for auto-complete
+        let currentSuggestions = [];
+        let selectedSuggestionIndex = -1;
+        
+        // Initialize UI
+        defaultInput.value = settings.defaultInput || "";
+        autoSpaceSelect.value = settings.autoSpace || "auto";
+        renderSourcesList();
+        renderKeywordsList();
+        generateSearchLinks();
+        
+        // Update clear button visibility
+        function updateClearButton() {
+            if (searchInput.value.trim() !== '') {
+                clearInputBtn.classList.add('visible');
+            } else {
+                clearInputBtn.classList.remove('visible');
+            }
+        }
+        
+        // Clear input button
+        clearInputBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.focus();
+            updateClearButton();
+            generateSearchLinks();
+            hideAutocomplete();
+            showNotification('Input cleared');
+        });
+        
+        // Show notification at bottom
+        function showNotification(message, duration = 2000) {
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, duration);
+        }
+        
+        // Get actual search query with proper spacing
+        function getActualQuery(inputQuery) {
+            const query = inputQuery.trim();
+            const defaultText = settings.defaultInput ? settings.defaultInput.trim() : '';
+            
+            if (!defaultText) return query;
+            
+            // Check if query already starts with default text
+            if (query.startsWith(defaultText)) {
+                return query;
+            }
+            
+            // Handle space based on settings
+            let spaceToAdd = '';
+            if (settings.autoSpace === 'always') {
+                spaceToAdd = ' ';
+            } else if (settings.autoSpace === 'auto') {
+                // Add space if default doesn't end with space
+                if (!defaultText.endsWith(' ')) {
+                    spaceToAdd = ' ';
+                }
+            }
+            // 'never' option doesn't add space
+            
+            return defaultText + spaceToAdd + query;
+        }
+        
+        // Get random keyword from saved keywords
+        function getRandomKeyword() {
+            if (keywords.length === 0) {
+                return null;
+            }
+            
+            const randomIndex = Math.floor(Math.random() * keywords.length);
+            return keywords[randomIndex].text;
+        }
+        
+        // Add random keyword to search input
+        function addRandomKeyword() {
+            if (keywords.length === 0) {
+                showNotification("No keywords saved yet. Add some keywords first!");
+                return;
+            }
+            
+            const randomKeyword = getRandomKeyword();
+            if (!randomKeyword) {
+                showNotification("No keywords available");
+                return;
+            }
+            
+            const currentValue = searchInput.value;
+            let newValue = '';
+            
+            if (currentValue.trim() === '') {
+                // If input is empty, just add the keyword
+                newValue = randomKeyword;
+            } else {
+                // If input has content, add space if needed and append keyword
+                const endsWithSpace = currentValue.endsWith(' ');
+                newValue = currentValue + (endsWithSpace ? '' : ' ') + randomKeyword;
+            }
+            
+            // Update input value
+            searchInput.value = newValue;
+            
+            // Focus on input
+            searchInput.focus();
+            
+            // Move cursor to end
+            searchInput.setSelectionRange(newValue.length, newValue.length);
+            
+            // Visual feedback for button
+            randomKeywordBtn.classList.add('active');
+            setTimeout(() => {
+                randomKeywordBtn.classList.remove('active');
+            }, 500);
+            
+            // Show notification
+            showNotification(`Added keyword: "${randomKeyword}"`);
+            
+            // Update UI
+            updateClearButton();
+            generateSearchLinks();
+            hideAutocomplete();
+        }
+        
+        // Generate auto search links
+        function generateSearchLinks() {
+            const query = searchInput.value.trim();
+            const actualQuery = getActualQuery(query);
+            
+            linksContainer.innerHTML = '';
+            
+            if (searchSources.length === 0) {
+                linksContainer.innerHTML = '<div class="no-links">No search engines configured. Add some in the Search Manager.</div>';
+                return;
+            }
+            
+            if (!actualQuery) {
+                linksContainer.innerHTML = '<div class="no-links">Type a search query to generate links</div>';
+                return;
+            }
+            
+            searchSources.forEach(source => {
+                const searchUrl = source.url.replace('{query}', encodeURIComponent(actualQuery));
+                const linkItem = document.createElement('a');
+                linkItem.className = 'search-link';
+                linkItem.href = searchUrl;
+                linkItem.target = '_blank';
+                linkItem.title = `Search with ${source.name}`;
+                
+                linkItem.innerHTML = `
+                    <div class="link-engine">
+                        <span>🔍</span> ${source.name}
+                    </div>
+                    <div class="link-query query-display">
+                        ${actualQuery}
+                    </div>
+                `;
+                
+                linksContainer.appendChild(linkItem);
+            });
+        }
+        
+        // Auto-complete functions
+        function showAutocomplete() {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            if (!query || keywords.length === 0) {
+                hideAutocomplete();
+                return;
+            }
+            
+            // Filter keywords that start with or contain the query
+            const suggestions = keywords
+                .filter(keyword => 
+                    keyword.text.toLowerCase().includes(query) ||
+                    query.includes(keyword.text.toLowerCase())
+                )
+                .slice(0, 5); // Limit to 5 suggestions
+            
+            if (suggestions.length === 0) {
+                hideAutocomplete();
+                return;
+            }
+            
+            currentSuggestions = suggestions;
+            selectedSuggestionIndex = -1;
+            
+            // Build suggestions HTML
+            autocompletePanel.innerHTML = '';
+            
+            suggestions.forEach((keyword, index) => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.setAttribute('data-index', index);
+                
+                // Highlight matching part
+                const keywordText = keyword.text;
+                const queryIndex = keywordText.toLowerCase().indexOf(query);
+                let displayText = keywordText;
+                
+                if (queryIndex !== -1 && query.length > 0) {
+                    const before = keywordText.substring(0, queryIndex);
+                    const match = keywordText.substring(queryIndex, queryIndex + query.length);
+                    const after = keywordText.substring(queryIndex + query.length);
+                    displayText = `${before}<strong>${match}</strong>${after}`;
+                }
+                
+                item.innerHTML = `
+                    <span class="keyword">${displayText}</span>
+                    <span class="hint">Click to select</span>
+                `;
+                
+                item.addEventListener('click', function() {
+                    selectSuggestion(index);
+                });
+                
+                autocompletePanel.appendChild(item);
+            });
+            
+            autocompletePanel.classList.add('active');
+        }
+        
+        function hideAutocomplete() {
+            autocompletePanel.classList.remove('active');
+            currentSuggestions = [];
+            selectedSuggestionIndex = -1;
+        }
+        
+        function selectSuggestion(index) {
+            if (index >= 0 && index < currentSuggestions.length) {
+                const keyword = currentSuggestions[index].text;
+                searchInput.value = keyword;
+                searchInput.focus();
+                searchInput.setSelectionRange(keyword.length, keyword.length);
+                
+                updateClearButton();
+                generateSearchLinks();
+                hideAutocomplete();
+                
+                showNotification(`Selected keyword: "${keyword}"`);
+            }
+        }
+        
+        function navigateSuggestions(direction) {
+            if (!autocompletePanel.classList.contains('active') || currentSuggestions.length === 0) {
+                return;
+            }
+            
+            // Remove previous selection
+            const previousItems = autocompletePanel.querySelectorAll('.autocomplete-item');
+            previousItems.forEach(item => {
+                item.style.backgroundColor = '';
+                item.style.color = '';
+            });
+            
+            // Calculate new index
+            if (direction === 'up') {
+                selectedSuggestionIndex = selectedSuggestionIndex <= 0 ? 
+                    currentSuggestions.length - 1 : selectedSuggestionIndex - 1;
+            } else if (direction === 'down') {
+                selectedSuggestionIndex = selectedSuggestionIndex >= currentSuggestions.length - 1 ? 
+                    0 : selectedSuggestionIndex + 1;
+            }
+            
+            // Highlight selected item
+            if (selectedSuggestionIndex >= 0) {
+                const selectedItem = autocompletePanel.querySelector(`[data-index="${selectedSuggestionIndex}"]`);
+                if (selectedItem) {
+                    selectedItem.style.backgroundColor = '#333';
+                    selectedItem.style.color = '#4a6fa5';
+                }
+            }
+        }
+        
+        // Random keyword button click
+        randomKeywordBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            addRandomKeyword();
+        });
+        
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show corresponding content
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${tabId}Tab`).classList.add('active');
+            });
+        });
+        
+        // Toggle sources panel visibility
+        lightBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            const isActive = sourcesPanel.classList.contains('active');
+            
+            if (isActive) {
+                sourcesPanel.classList.remove('active');
+                lightBtn.classList.remove('active');
+                panelOverlay.classList.remove('active');
+            } else {
+                sourcesPanel.classList.add('active');
+                lightBtn.classList.add('active');
+                panelOverlay.classList.add('active');
+                settingsPanel.classList.remove('active');
+                settingsBtn.classList.remove('active');
+                hideAutocomplete();
+            }
+        });
+        
+        // Toggle settings panel visibility
+        settingsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            const isActive = settingsPanel.classList.contains('active');
+            
+            if (isActive) {
+                settingsPanel.classList.remove('active');
+                settingsBtn.classList.remove('active');
+                panelOverlay.classList.remove('active');
+            } else {
+                settingsPanel.classList.add('active');
+                settingsBtn.classList.add('active');
+                panelOverlay.classList.add('active');
+                sourcesPanel.classList.remove('active');
+                lightBtn.classList.remove('active');
+                hideAutocomplete();
+            }
+        });
+        
+        // Close panels when clicking overlay
+        panelOverlay.addEventListener('click', function() {
+            sourcesPanel.classList.remove('active');
+            settingsPanel.classList.remove('active');
+            lightBtn.classList.remove('active');
+            settingsBtn.classList.remove('active');
+            panelOverlay.classList.remove('active');
+            hideAutocomplete();
+        });
+        
+        // Close panels when clicking outside
+        document.addEventListener('click', function(e) {
+            // Handle panels
+            if (sourcesPanel.classList.contains('active') || settingsPanel.classList.contains('active')) {
+                if (!sourcesPanel.contains(e.target) && !settingsPanel.contains(e.target) && 
+                    !lightBtn.contains(e.target) && !settingsBtn.contains(e.target)) {
+                    sourcesPanel.classList.remove('active');
+                    settingsPanel.classList.remove('active');
+                    lightBtn.classList.remove('active');
+                    settingsBtn.classList.remove('active');
+                    panelOverlay.classList.remove('active');
+                }
+            }
+            
+            // Handle auto-complete
+            if (!searchInput.contains(e.target) && !autocompletePanel.contains(e.target)) {
+                hideAutocomplete();
+            }
+        });
+        
+        // Prevent panels from closing when clicking inside them
+        sourcesPanel.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        settingsPanel.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Save settings
+        saveSettingsBtn.addEventListener('click', function() {
+            settings.defaultInput = defaultInput.value.trim();
+            settings.autoSpace = autoSpaceSelect.value;
+            saveSettings();
+            showNotification('Settings saved successfully');
+            generateSearchLinks(); // Regenerate links with new settings
+        });
+        
+        // Reset settings
+        resetSettingsBtn.addEventListener('click', function() {
+            defaultInput.value = "";
+            autoSpaceSelect.value = "auto";
+            showNotification('Settings reset to default');
+        });
+        
+        // === SOURCES TAB FUNCTIONS ===
+        
+        // Add source from form
+        addSourceBtn.addEventListener('click', function() {
+            const name = engineNameInput.value.trim();
+            const url = engineUrlInput.value.trim();
+            
+            if (!name || !url) {
+                alert('Please fill in both name and URL fields');
+                return;
+            }
+            
+            if (!url.includes('{query}')) {
+                alert('URL must contain {query} placeholder for search terms');
+                return;
+            }
+            
+            // Add new source
+            searchSources.push({
+                name: name,
+                url: url,
+                type: "custom"
+            });
+            
+            // Save to local storage
+            saveSources();
+            
+            // Render updated list
+            renderSourcesList();
+            
+            // Clear form
+            engineNameInput.value = '';
+            engineUrlInput.value = '';
+            
+            showNotification(`"${name}" added to search engines`);
+        });
+        
+        // Clear source form
+        clearSourceFormBtn.addEventListener('click', function() {
+            engineNameInput.value = '';
+            engineUrlInput.value = '';
+        });
+        
+        // Upload file
+        uploadBtn.addEventListener('click', function() {
+            if (!sourceFileInput.files.length) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const file = sourceFileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    let importedSources = [];
+                    
+                    if (file.name.endsWith('.json')) {
+                        // Parse JSON
+                        const data = JSON.parse(content);
+                        if (Array.isArray(data)) {
+                            importedSources = data.map(item => ({
+                                name: item.name || 'Unknown',
+                                url: item.url || '',
+                                type: 'imported'
+                            }));
+                        } else if (data.name && data.url) {
+                            importedSources = [{
+                                name: data.name,
+                                url: data.url,
+                                type: 'imported'
+                            }];
+                        } else {
+                            throw new Error('Invalid JSON format');
+                        }
+                    } else if (file.name.endsWith('.txt')) {
+                        // Parse TXT
+                        const lines = content.split('\n');
+                        importedSources = lines
+                            .filter(line => line.trim())
+                            .map(line => {
+                                const parts = line.split(' - ');
+                                return {
+                                    name: parts[0] || 'Unknown',
+                                    url: parts[1] || '',
+                                    type: 'imported'
+                                };
+                            });
+                    }
+                    
+                    // Filter valid sources
+                    const validSources = importedSources.filter(source => 
+                        source.name && source.url && source.url.includes('{query}')
+                    );
+                    
+                    if (validSources.length === 0) {
+                        alert('No valid sources found in file. Make sure URLs contain {query} placeholder.');
+                        return;
+                    }
+                    
+                    // Add to sources list
+                    searchSources.push(...validSources);
+                    saveSources();
+                    renderSourcesList();
+                    showNotification(`Imported ${validSources.length} search engine(s) from file`);
+                    
+                    // Reset file input
+                    sourceFileInput.value = '';
+                    
+                } catch (error) {
+                    alert('Error parsing file: ' + error.message);
+                }
+            };
+            
+            reader.readAsText(file);
+        });
+        
+        // Search using selected engine
+        function searchWithEngine(sourceIndex) {
+            const query = searchInput.value.trim();
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            const actualQuery = getActualQuery(query);
+            const source = searchSources[sourceIndex];
+            const searchUrl = source.url.replace('{query}', encodeURIComponent(actualQuery));
+            
+            // Open in new tab
+            window.open(searchUrl, '_blank');
+            
+            // Close panel after search
+            sourcesPanel.classList.remove('active');
+            lightBtn.classList.remove('active');
+            panelOverlay.classList.remove('active');
+            hideAutocomplete();
+        }
+        
+        // Delete source
+        function deleteSource(sourceIndex) {
+            // Don't allow deleting default sources
+            if (searchSources[sourceIndex].type === 'default') {
+                alert('Default search engines cannot be deleted');
+                return;
+            }
+            
+            if (confirm(`Delete "${searchSources[sourceIndex].name}"?`)) {
+                searchSources.splice(sourceIndex, 1);
+                saveSources();
+                renderSourcesList();
+                showNotification('Search engine deleted');
+            }
+        }
+        
+        // Render sources list
+        function renderSourcesList() {
+            sourcesList.innerHTML = '';
+            
+            if (searchSources.length === 0) {
+                sourcesList.innerHTML = '<div class="empty-state">No search engines added yet</div>';
+                return;
+            }
+            
+            searchSources.forEach((source, index) => {
+                const sourceItem = document.createElement('div');
+                sourceItem.className = 'source-item';
+                
+                sourceItem.innerHTML = `
+                    <div class="source-info">
+                        <div class="source-name">${source.name} ${source.type === 'default' ? '(Default)' : ''}</div>
+                        <div class="source-url">${source.url}</div>
+                    </div>
+                    <div class="source-actions">
+                        <button class="source-btn search" data-index="${index}">Search</button>
+                        ${source.type !== 'default' ? `<button class="source-btn delete" data-index="${index}">Delete</button>` : ''}
+                    </div>
+                `;
+                
+                sourcesList.appendChild(sourceItem);
+            });
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.source-btn.search').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    searchWithEngine(index);
+                });
+            });
+            
+            document.querySelectorAll('.source-btn.delete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    deleteSource(index);
+                });
+            });
+        }
+        
+        // === KEYWORDS TAB FUNCTIONS ===
+        
+        // Add keyword
+        addKeywordBtn.addEventListener('click', function() {
+            const keyword = keywordInput.value.trim();
+            
+            if (!keyword) {
+                alert('Please enter a keyword');
+                return;
+            }
+            
+            // Check if keyword already exists
+            if (keywords.some(k => k.text.toLowerCase() === keyword.toLowerCase())) {
+                alert('This keyword already exists');
+                return;
+            }
+            
+            // Add new keyword
+            keywords.push({
+                text: keyword,
+                date: new Date().toLocaleDateString()
+            });
+            
+            // Save to local storage
+            saveKeywords();
+            
+            // Render updated list
+            renderKeywordsList();
+            
+            // Clear form
+            keywordInput.value = '';
+            
+            showNotification(`"${keyword}" added to keywords`);
+        });
+        
+        // Clear keyword form
+        clearKeywordFormBtn.addEventListener('click', function() {
+            keywordInput.value = '';
+        });
+        
+        // Search with keyword
+        function searchWithKeyword(keywordText) {
+            searchInput.value = keywordText;
+            searchInput.focus();
+            
+            // Close panel after selecting keyword
+            sourcesPanel.classList.remove('active');
+            lightBtn.classList.remove('active');
+            panelOverlay.classList.remove('active');
+            
+            showNotification(`Keyword "${keywordText}" added to search`);
+            updateClearButton();
+            generateSearchLinks();
+            hideAutocomplete();
+        }
+        
+        // Delete keyword
+        function deleteKeyword(keywordIndex) {
+            if (confirm(`Delete "${keywords[keywordIndex].text}"?`)) {
+                keywords.splice(keywordIndex, 1);
+                saveKeywords();
+                renderKeywordsList();
+                showNotification('Keyword deleted');
+            }
+        }
+        
+        // Render keywords list
+        function renderKeywordsList() {
+            keywordsList.innerHTML = '';
+            
+            if (keywords.length === 0) {
+                keywordsList.innerHTML = '<div class="empty-state">No keywords added yet</div>';
+                return;
+            }
+            
+            keywords.forEach((keyword, index) => {
+                const keywordItem = document.createElement('div');
+                keywordItem.className = 'keyword-item';
+                
+                keywordItem.innerHTML = `
+                    <div class="keyword-info">
+                        <div class="keyword-text">${keyword.text}</div>
+                        <div class="keyword-date">Added: ${keyword.date}</div>
+                    </div>
+                    <div class="keyword-actions">
+                        <button class="keyword-btn use" data-index="${index}">Use</button>
+                        <button class="keyword-btn delete" data-index="${index}">Delete</button>
+                    </div>
+                `;
+                
+                keywordsList.appendChild(keywordItem);
+            });
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.keyword-btn.use').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    searchWithKeyword(keywords[index].text);
+                });
+            });
+            
+            document.querySelectorAll('.keyword-btn.delete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    deleteKeyword(index);
+                });
+            });
+        }
+        
+        // === EVENT LISTENERS ===
+        
+        // Update search links and auto-complete when input changes
+        searchInput.addEventListener('input', function() {
+            updateClearButton();
+            generateSearchLinks();
+            showAutocomplete();
+        });
+        
+        // Search with default engine on Enter
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                if (!query) {
+                    alert('Please enter a search query');
+                    return;
+                }
+                
+                const actualQuery = getActualQuery(query);
+                const defaultSource = searchSources[0];
+                const searchUrl = defaultSource.url.replace('{query}', encodeURIComponent(actualQuery));
+                
+                showNotification(`Searching with ${defaultSource.name}: ${actualQuery}`);
+                window.open(searchUrl, '_blank');
+                hideAutocomplete();
+            }
+            
+            // Arrow keys for auto-complete navigation
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                navigateSuggestions('down');
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateSuggestions('up');
+            } else if (e.key === 'Tab' && autocompletePanel.classList.contains('active') && 
+                       selectedSuggestionIndex >= 0) {
+                e.preventDefault();
+                selectSuggestion(selectedSuggestionIndex);
+            } else if (e.key === 'Escape') {
+                hideAutocomplete();
+            }
+        });
+        
+        // Focus on input when clicking brand
+        document.querySelector('.brand').addEventListener('click', function() {
+            searchInput.focus();
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Shift+S to open sources panel (Cmd+Shift+S on Mac)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
+                if (!sourcesPanel.classList.contains('active')) {
+                    sourcesPanel.classList.add('active');
+                    lightBtn.classList.add('active');
+                    panelOverlay.classList.add('active');
+                    settingsPanel.classList.remove('active');
+                    settingsBtn.classList.remove('active');
+                    hideAutocomplete();
+                }
+            }
+            
+            // Ctrl+Shift+K to add random keyword (Cmd+Shift+K on Mac)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'K') {
+                e.preventDefault();
+                addRandomKeyword();
+            }
+            
+            // Ctrl+Shift+P to open settings panel (Cmd+Shift+P on Mac)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
+                e.preventDefault();
+                if (!settingsPanel.classList.contains('active')) {
+                    settingsPanel.classList.add('active');
+                    settingsBtn.classList.add('active');
+                    panelOverlay.classList.add('active');
+                    sourcesPanel.classList.remove('active');
+                    lightBtn.classList.remove('active');
+                    hideAutocomplete();
+                }
+            }
+            
+            // Ctrl+L to focus search input (Cmd+L on Mac)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'l' && !e.shiftKey) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            
+            // Escape to close panels
+            if (e.key === 'Escape' && (sourcesPanel.classList.contains('active') || settingsPanel.classList.contains('active'))) {
+                sourcesPanel.classList.remove('active');
+                settingsPanel.classList.remove('active');
+                lightBtn.classList.remove('active');
+                settingsBtn.classList.remove('active');
+                panelOverlay.classList.remove('active');
+                hideAutocomplete();
+            }
+        });
+        
+        // Initialize with focus on search input
+        searchInput.focus();
+        generateSearchLinks();
+        updateClearButton();
+    </script>
+</body>
+</html>
