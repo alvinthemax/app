@@ -1,0 +1,1 @@
+Multi sources, localstorage integrated
