@@ -1,1 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder Structure Viewer</title>
+    <style>
+        /* Mobile-First CSS */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #4a6fa5 0%, #3a5a85 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .upload-section {
+            padding: 25px 20px;
+            background-color: #f9fafc;
+            border-bottom: 1px solid #eaeef5;
+        }
+        
+        .upload-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .upload-title {
+            font-size: 1.2rem;
+            color: #4a6fa5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .upload-title::before {
+            content: "📂";
+        }
+        
+        .clear-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: none; /* Hidden by default */
+        }
+        
+        .clear-btn::before {
+            content: "🗑️";
+            margin-right: 6px;
+        }
+        
+        .clear-btn:hover {
+            background-color: #f1b0b7;
+            transform: translateY(-2px);
+        }
+        
+        .folder-input-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .folder-input-wrapper label {
+            font-weight: 600;
+            color: #4a6fa5;
+            font-size: 1.05rem;
+        }
+        
+        .upload-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .select-folder-btn {
+            padding: 12px 20px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 200px;
+        }
+        
+        .select-folder-btn:hover {
+            background-color: #3a5a85;
+            transform: translateY(-2px);
+        }
+        
+        .select-folder-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .or-divider {
+            display: flex;
+            align-items: center;
+            color: #666;
+            font-size: 0.9rem;
+            padding: 0 10px;
+        }
+        
+        .legacy-input-wrapper {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        #folderInput {
+            padding: 15px;
+            border: 2px dashed #c1c9d6;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        #folderInput:hover {
+            border-color: #4a6fa5;
+            background-color: #f8faff;
+        }
+        
+        .upload-tip {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+            background-color: #f0f4ff;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border-left: 4px solid #4a6fa5;
+        }
+        
+        .preview-section {
+            padding: 25px 20px;
+            border-bottom: 1px solid #eaeef5;
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .preview-title {
+            font-size: 1.3rem;
+            color: #4a6fa5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .preview-title::before {
+            content: "📊";
+        }
+        
+        .copy-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #4a6fa5;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        
+        .copy-btn::before {
+            content: "📋";
+            font-size: 1.1rem;
+        }
+        
+        .copy-btn:hover {
+            background-color: #3a5a85;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(58, 90, 133, 0.2);
+        }
+        
+        .file-count {
+            background-color: #f0f4ff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #4a6fa5;
+            font-weight: 500;
+            border: 1px solid #d8e1ff;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        
+        .tree-container {
+            background-color: #f9fafc;
+            border: 1px solid #e1e7f3;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+            margin-top: 15px;
+        }
+        
+        .tree-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .tree-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .tree-container::-webkit-scrollbar-thumb {
+            background: #c1c9d6;
+            border-radius: 4px;
+        }
+        
+        .tree-container::-webkit-scrollbar-thumb:hover {
+            background: #a8b1c4;
+        }
+        
+        .controls-section {
+            padding: 25px 20px;
+            background-color: #f9fafc;
+        }
+        
+        .controls-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #4a6fa5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .controls-title::before {
+            content: "⚙️";
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid #e1e7f3;
+            transition: all 0.2s ease;
+        }
+        
+        .control-group:hover {
+            border-color: #c1c9d6;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+        }
+        
+        .control-label {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .tooltip-icon {
+            color: #7a8ca5;
+            cursor: help;
+            font-size: 0.9rem;
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 1px solid #d1d9e6;
+            font-style: normal;
+            font-weight: bold;
+        }
+        
+        .tooltip-icon:hover {
+            background-color: #f0f4ff;
+        }
+        
+        /* Toggle Switch Fix - Label mengontrol input, bukan div wrapper */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #d1d9e6;
+            border-radius: 26px;
+            transition: .3s;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #4a6fa5;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .delete-btn {
+            cursor: pointer;
+            color: #e74c3c;
+            margin-right: 8px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background-color: rgba(231, 76, 60, 0.1);
+            display: inline-block;
+            text-align: center;
+            min-width: 20px;
+            transition: all 0.2s ease;
+        }
+        
+        .delete-btn:hover {
+            background-color: rgba(231, 76, 60, 0.2);
+            transform: scale(1.1);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7a8ca5;
+            font-size: 0.9rem;
+            border-top: 1px solid #eaeef5;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+        
+        /* Tooltip styling */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 240px;
+            background-color: #4a6fa5;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 12px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            font-weight: normal;
+            line-height: 1.4;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #4a6fa5 transparent transparent transparent;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Desktop Styles */
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .upload-header {
+                flex-wrap: nowrap;
+            }
+            
+            .clear-btn {
+                display: none; /* Tetap tersembunyi sampai ada input */
+            }
+            
+            .preview-header {
+                flex-wrap: nowrap;
+            }
+            
+            .controls-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tree-container {
+                max-height: 500px;
+            }
+        }
+        
+        @media (min-width: 992px) {
+            .controls-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        /* Loading animation */
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .loading {
+            animation: pulse 1.5s infinite;
+            cursor: wait !important;
+        }
+        
+        /* Success animation */
+        @keyframes success {
+            0% { background-color: #4a6fa5; }
+            50% { background-color: #2ecc71; }
+            100% { background-color: #4a6fa5; }
+        }
+        
+        .success {
+            animation: success 2s ease;
+        }
+        
+        /* Progress bar */
+        .progress-container {
+            margin-top: 15px;
+            background-color: #e1e7f3;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 6px;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #4a6fa5;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📁 Folder Structure Viewer</h1>
+            <p class="subtitle">Upload any folder to instantly visualize its structure. Uses File System API for large folders. Customize the display and copy with one click.</p>
+        </header>
+        
+        <div class="upload-section">
+            <div class="upload-header">
+                <h3 class="upload-title">Select Folder</h3>
+                <button class="clear-btn" onclick="clearAll()">Clear</button>
+            </div>
+            <div class="folder-input-wrapper">
+                <label for="folderInput">Select a folder to analyze:</label>
+                <div class="upload-options">
+                    <button id="fsaButton" class="select-folder-btn">
+                        📁 Select Folder (FSA API)
+                    </button>
+                    <div class="or-divider">
+                        or
+                    </div>
+                    <div class="legacy-input-wrapper">
+                        <input type="file" webkitdirectory directory multiple id="folderInput">
+                    </div>
+                </div>
+                <div class="upload-tip">
+                    <strong>Tip:</strong> Use "Select Folder (FSA API)" for large folders (reads only file/folder names, not file contents). Works best in Chrome/Edge 86+ and Firefox 111+.
+                </div>
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-text" id="progressText"></div>
+            </div>
+        </div>
+        
+        <div class="preview-section">
+            <div class="preview-header">
+                <h3 class="preview-title">Structure Preview</h3>
+                <button class="copy-btn" onclick="copyToClipboard()">Copy Structure</button>
+            </div>
+            <div class="file-count">
+                <span id="fileCount">0 files</span> • <span id="folderCount">0 folders</span>
+            </div>
+            <div class="tree-container">
+                <pre id="fileTree">Select a folder above to see its structure here...</pre>
+            </div>
+        </div>
+        
+        <div class="controls-section">
+            <h3 class="controls-title">Display Options</h3>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label class="control-label" for="toggleRoot">
+                        <span class="toggle-switch">
+                            <input type="checkbox" id="toggleRoot" checked>
+                            <span class="toggle-slider"></span>
+                        </span>
+                        Root "."
+                        <span class="tooltip">
+                            <span class="tooltip-icon">ⓘ</span>
+                            <span class="tooltip-text">Show root folder as "." at the top of the structure</span>
+                        </span>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label" for="toggleFullPath">
+                        <span class="toggle-switch">
+                            <input type="checkbox" id="toggleFullPath">
+                            <span class="toggle-slider"></span>
+                        </span>
+                        Full Path
+                        <span class="tooltip">
+                            <span class="tooltip-icon">ⓘ</span>
+                            <span class="tooltip-text">Display the full path for each file and folder</span>
+                        </span>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label" for="toggleTrailingSlash">
+                        <span class="toggle-switch">
+                            <input type="checkbox" id="toggleTrailingSlash">
+                            <span class="toggle-slider"></span>
+                        </span>
+                        Trailing "/"
+                        <span class="tooltip">
+                            <span class="tooltip-icon">ⓘ</span>
+                            <span class="tooltip-text">Add a trailing slash to folder names for easier identification</span>
+                        </span>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label" for="toggleDeleteButtons">
+                        <span class="toggle-switch">
+                            <input type="checkbox" id="toggleDeleteButtons" checked>
+                            <span class="toggle-slider"></span>
+                        </span>
+                        Delete Buttons
+                        <span class="tooltip">
+                            <span class="tooltip-icon">ⓘ</span>
+                            <span class="tooltip-text">Show delete buttons next to items to remove them from the preview</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p><strong>Folder Structure Viewer</strong> • All processing happens locally in your browser • No data is sent to any server</p>
+            <p style="margin-top: 8px; font-size: 0.85rem;">Works with Chrome, Edge, Safari, and other modern browsers</p>
+        </footer>
+    </div>
+    
+    <script>
+/* =========================
+   GLOBAL STATE
+========================= */
+let fileTree = {};
+let fileCount = 0;
+let folderCount = 0;
+let currentFolderHandle = null;
+let scanProgress = {
+    totalItems: 0,
+    processedItems: 0,
+    isScanning: false
+};
 
+const displayControls = {
+    showRoot: true,
+    showFullPath: false,
+    showTrailingSlash: false,
+    showDeleteButtons: true
+};
+
+/* =========================
+   DOM ELEMENTS
+========================= */
+const folderInput = document.getElementById('folderInput');
+const fsaButton = document.getElementById('fsaButton');
+const clearButton = document.querySelector('.clear-btn');
+const copyButton = document.querySelector('.copy-btn');
+const fileTreeElement = document.getElementById('fileTree');
+const fileCountEl = document.getElementById('fileCount');
+const folderCountEl = document.getElementById('folderCount');
+const progressContainer = document.getElementById('progressContainer');
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+
+/* =========================
+   TOGGLE CONTROLS
+========================= */
+toggleRoot.onchange = e => {
+    displayControls.showRoot = e.target.checked;
+    renderTree();
+};
+
+toggleFullPath.onchange = e => {
+    displayControls.showFullPath = e.target.checked;
+    renderTree();
+};
+
+toggleTrailingSlash.onchange = e => {
+    displayControls.showTrailingSlash = e.target.checked;
+    renderTree();
+};
+
+toggleDeleteButtons.onchange = e => {
+    displayControls.showDeleteButtons = e.target.checked;
+    renderTree();
+};
+
+/* =========================
+   FSA API - FOLDER SCANNING
+========================= */
+async function scanFolderWithFSA(folderHandle) {
+    const tree = {};
+    scanProgress = {
+        totalItems: 0,
+        processedItems: 0,
+        isScanning: true
+    };
+    
+    // First pass: count total items
+    await countItemsInFolder(folderHandle);
+    
+    // Second pass: build tree structure
+    await buildTreeStructure(folderHandle, tree, '');
+    
+    scanProgress.isScanning = false;
+    progressContainer.style.display = 'none';
+    progressText.style.display = 'none';
+    
+    return tree;
+}
+
+async function countItemsInFolder(handle, path = '') {
+    for await (const entry of handle.values()) {
+        scanProgress.totalItems++;
+        if (entry.kind === 'directory') {
+            await countItemsInFolder(entry, `${path}/${entry.name}`);
+        }
+    }
+}
+
+async function buildTreeStructure(handle, tree, currentPath = '') {
+    const entries = [];
+    
+    // Collect all entries
+    for await (const entry of handle.values()) {
+        entries.push({
+            name: entry.name,
+            handle: entry,
+            isFile: entry.kind === 'file',
+            path: currentPath ? `${currentPath}/${entry.name}` : entry.name
+        });
+    }
+    
+    // Sort: folders first, then files
+    entries.sort((a, b) => {
+        if (a.isFile && !b.isFile) return 1;
+        if (!a.isFile && b.isFile) return -1;
+        return a.name.localeCompare(b.name);
+    });
+    
+    // Process each entry
+    for (const entry of entries) {
+        scanProgress.processedItems++;
+        updateProgress();
+        
+        if (entry.isFile) {
+            // Add file to tree
+            addToTree(tree, entry.path, null);
+        } else {
+            // Add folder to tree and continue recursively
+            addToTree(tree, entry.path, {});
+            await buildTreeStructure(entry.handle, tree, entry.path);
+        }
+    }
+}
+
+function addToTree(tree, path, value) {
+    const parts = path.split('/');
+    let node = tree;
+    
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (i === parts.length - 1) {
+            node[part] = value;
+        } else {
+            if (!node[part] || node[part] === null) {
+                node[part] = {};
+            }
+            node = node[part];
+        }
+    }
+}
+
+function updateProgress() {
+    if (scanProgress.totalItems > 0) {
+        const percentage = Math.round((scanProgress.processedItems / scanProgress.totalItems) * 100);
+        progressBar.style.width = `${percentage}%`;
+        progressText.textContent = `Scanning... ${scanProgress.processedItems} of ${scanProgress.totalItems} items (${percentage}%)`;
+        
+        if (!progressContainer.style.display || progressContainer.style.display === 'none') {
+            progressContainer.style.display = 'block';
+            progressText.style.display = 'block';
+        }
+    }
+}
+
+/* =========================
+   FSA API BUTTON HANDLER
+========================= */
+fsaButton.addEventListener('click', async () => {
+    try {
+        // Check browser support
+        if (!('showDirectoryPicker' in window)) {
+            alert('Your browser does not support the File System Access API. Please use Chrome/Edge 86+ or Firefox 111+. Falling back to traditional method.');
+            folderInput.click();
+            return;
+        }
+        
+        // Show directory picker
+        const folderHandle = await window.showDirectoryPicker({
+            id: 'folderPicker',
+            mode: 'read',
+            startIn: 'documents'
+        });
+        
+        currentFolderHandle = folderHandle;
+        
+        // Show loading state
+        fsaButton.textContent = '🔄 Scanning...';
+        fsaButton.classList.add('loading');
+        fsaButton.disabled = true;
+        
+        // Scan folder using FSA API
+        fileTree = await scanFolderWithFSA(folderHandle);
+        
+        // Count files and folders
+        fileCount = 0;
+        folderCount = 0;
+        countItems(fileTree);
+        updateCounters();
+        
+        // Render the tree
+        renderTree();
+        
+        // Show clear button
+        clearButton.style.display = 'inline-block';
+        
+        // Update button text with folder name
+        fsaButton.textContent = `📁 ${folderHandle.name}`;
+        fsaButton.classList.remove('loading');
+        fsaButton.disabled = false;
+        
+    } catch (error) {
+        // User cancelled the folder selection
+        if (error.name === 'AbortError') {
+            console.log('Folder selection cancelled');
+        } else {
+            console.error('Error accessing folder:', error);
+            alert(`Error accessing folder: ${error.message}\n\nTry using the traditional file input below.`);
+        }
+        
+        // Reset button state
+        fsaButton.textContent = '📁 Select Folder (FSA API)';
+        fsaButton.classList.remove('loading');
+        fsaButton.disabled = false;
+        progressContainer.style.display = 'none';
+        progressText.style.display = 'none';
+    }
+});
+
+/* =========================
+   LEGACY INPUT HANDLER
+========================= */
+folderInput.onchange = e => {
+    const files = e.target.files;
+    fileTree = {};
+    fileCount = folderCount = 0;
+    clearButton.style.display = 'inline-block';
+
+    // Build tree structure from file list
+    for (const file of files) {
+        const parts = file.webkitRelativePath.split('/');
+        let node = fileTree;
+        parts.forEach((p, i) => {
+            if (!node[p]) {
+                node[p] = (i === parts.length - 1) ? null : {};
+            }
+            node = node[p];
+        });
+    }
+
+    // Count items and update UI
+    countItems(fileTree);
+    updateCounters();
+    renderTree();
+};
+
+/* =========================
+   COUNTING FUNCTIONS
+========================= */
+function countItems(tree) {
+    for (const key in tree) {
+        if (tree[key] === null) {
+            fileCount++;
+        } else {
+            folderCount++;
+            countItems(tree[key]);
+        }
+    }
+}
+
+function updateCounters() {
+    fileCountEl.textContent = `${fileCount} file${fileCount !== 1 ? 's' : ''}`;
+    folderCountEl.textContent = `${folderCount} folder${folderCount !== 1 ? 's' : ''}`;
+}
+
+/* =========================
+   TREE RENDERING
+========================= */
+function renderTree() {
+    function buildTreeText(tree, prefix = "", path = []) {
+        let output = "";
+        const keys = Object.keys(tree);
+        
+        if (keys.length === 0) {
+            return output;
+        }
+        
+        keys.forEach((key, index) => {
+            const isLast = index === keys.length - 1;
+            const isFile = tree[key] === null;
+            const fullPath = [...path, key].join('/');
+            
+            // Format the name based on settings
+            let displayName = displayControls.showFullPath ? fullPath : key;
+            if (!isFile && displayControls.showTrailingSlash) {
+                displayName += "/";
+            }
+            
+            // Build the line
+            let line = prefix;
+            
+            // Add delete button if enabled
+            if (displayControls.showDeleteButtons && path.length > 0) {
+                line += `<span class="delete-btn" onclick="deleteEntry('${fullPath}')" title="Remove from preview">×</span> `;
+            }
+            
+            // Add tree branch and name
+            line += `${isLast ? "└── " : "├── "}${displayName}\n`;
+            output += line;
+            
+            // If it's a folder, recurse
+            if (!isFile) {
+                output += buildTreeText(
+                    tree[key],
+                    prefix + (isLast ? "    " : "│   "),
+                    [...path, key]
+                );
+            }
+        });
+        
+        return output;
+    }
+    
+    const roots = Object.keys(fileTree);
+    let treeText = "";
+    
+    // Handle root display options
+    if (displayControls.showRoot) {
+        treeText = ".\n" + buildTreeText(fileTree);
+    } else if (roots.length === 1 && fileTree[roots[0]] !== null) {
+        // Single root folder - show its name instead of "."
+        treeText = roots[0] + (displayControls.showTrailingSlash ? "/" : "") + "\n" + 
+                   buildTreeText(fileTree[roots[0]], "", [roots[0]]);
+    } else {
+        // Multiple roots or empty
+        treeText = buildTreeText(fileTree);
+    }
+    
+    // Update the display
+    fileTreeElement.innerHTML = treeText || "No structure to display.";
+}
+
+/* =========================
+   DELETE ENTRY
+========================= */
+function deleteEntry(path) {
+    const parts = path.split('/');
+    let node = fileTree;
+    
+    // Navigate to the parent of the item to delete
+    for (let i = 0; i < parts.length - 1; i++) {
+        node = node[parts[i]];
+        if (!node) return;
+    }
+    
+    // Delete the item
+    const itemName = parts[parts.length - 1];
+    delete node[itemName];
+    
+    // Recalculate counts
+    fileCount = 0;
+    folderCount = 0;
+    countItems(fileTree);
+    updateCounters();
+    
+    // Re-render tree
+    renderTree();
+}
+
+/* =========================
+   COPY TO CLIPBOARD
+========================= */
+function copyToClipboard() {
+    if (!fileTree || Object.keys(fileTree).length === 0) {
+        alert("No folder structure to copy.");
+        return;
+    }
+    
+    function buildPlainTextTree(tree, prefix = "") {
+        let result = "";
+        const keys = Object.keys(tree);
+        
+        keys.forEach((key, index) => {
+            const isLast = index === keys.length - 1;
+            const isFile = tree[key] === null;
+            
+            let name = key;
+            if (!isFile && displayControls.showTrailingSlash) {
+                name += "/";
+            }
+            
+            result += `${prefix}${isLast ? "└── " : "├── "}${name}\n`;
+            
+            if (!isFile) {
+                result += buildPlainTextTree(
+                    tree[key],
+                    prefix + (isLast ? "    " : "│   ")
+                );
+            }
+        });
+        
+        return result;
+    }
+    
+    const roots = Object.keys(fileTree);
+    let text = "";
+    
+    if (displayControls.showRoot) {
+        text = ".\n" + buildPlainTextTree(fileTree);
+    } else if (roots.length === 1 && fileTree[roots[0]] !== null) {
+        text = roots[0] + (displayControls.showTrailingSlash ? "/" : "") + "\n" + 
+               buildPlainTextTree(fileTree[roots[0]]);
+    } else {
+        text = buildPlainTextTree(fileTree);
+    }
+    
+    // Copy to clipboard using modern API if available
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                copyButton.textContent = "✓ Copied!";
+                copyButton.classList.add('success');
+                setTimeout(() => {
+                    copyButton.textContent = "Copy Structure";
+                    copyButton.classList.remove('success');
+                }, 1500);
+            })
+            .catch(err => {
+                console.error('Failed to copy: ', err);
+                fallbackCopy(text);
+            });
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "-9999px";
+    
+    document.body.appendChild(textarea);
+    textarea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            copyButton.textContent = "✓ Copied!";
+            copyButton.classList.add('success');
+            setTimeout(() => {
+                copyButton.textContent = "Copy Structure";
+                copyButton.classList.remove('success');
+            }, 1500);
+        } else {
+            alert("Failed to copy. Please try again or use Ctrl+C on the text.");
+        }
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+        alert("Copy failed. Please select the text manually and copy with Ctrl+C.");
+    } finally {
+        document.body.removeChild(textarea);
+    }
+}
+
+/* =========================
+   CLEAR ALL
+========================= */
+function clearAll() {
+    fileTree = {};
+    fileCount = folderCount = 0;
+    folderInput.value = "";
+    currentFolderHandle = null;
+    clearButton.style.display = 'none';
+    
+    // Reset UI
+    updateCounters();
+    fileTreeElement.textContent = "Select a folder above to see its structure here...";
+    fsaButton.textContent = '📁 Select Folder (FSA API)';
+    fsaButton.classList.remove('loading');
+    fsaButton.disabled = false;
+    
+    // Hide progress indicators
+    progressContainer.style.display = 'none';
+    progressText.style.display = 'none';
+}
+
+/* =========================
+   INITIALIZATION
+========================= */
+// Initialize counters
+updateCounters();
+
+// Check FSA API support and update button accordingly
+if (!('showDirectoryPicker' in window)) {
+    fsaButton.title = "File System Access API not supported in this browser. Click to use traditional method.";
+    fsaButton.style.opacity = "0.8";
+}
+    </script>
+</body>
+</html>
