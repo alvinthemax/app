@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GitHub Content Manager</title>
+  <title>GitHub Content Manager - Offline First</title>
   <style>
     :root {
       --bg: #f2f2f2;
@@ -21,6 +21,7 @@
       --danger: #e53935;
       --warning: #ff9800;
       --success: #4caf50;
+      --info: #2196f3;
     }
 
     * {
@@ -97,6 +98,25 @@
       padding: 0;
       width: 24px;
       height: 24px;
+    }
+
+    /* OFFLINE INDICATOR */
+    .offline-indicator {
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      right: 0;
+      background: var(--warning);
+      color: white;
+      padding: 8px 16px;
+      text-align: center;
+      font-size: 13px;
+      z-index: 350;
+      display: none;
+    }
+
+    .offline-indicator.active {
+      display: block;
     }
 
     /* TAB */
@@ -525,6 +545,7 @@
     .btn.danger { background: var(--danger); color: #fff; }
     .btn.warning { background: var(--warning); color: #fff; }
     .btn.success { background: var(--success); color: #fff; }
+    .btn.info { background: var(--info); color: #fff; }
 
     /* MODE TABS IN SIDEBAR */
     .mode-tabs {
@@ -874,6 +895,66 @@
       font-style: italic;
     }
 
+    /* CACHE INFO BAR */
+    .cache-info {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--panel);
+      border-top: 1px solid var(--line);
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 450;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .cache-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cache-status .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .cache-status .indicator.online {
+      background: var(--success);
+    }
+
+    .cache-status .indicator.offline {
+      background: var(--warning);
+    }
+
+    .cache-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .cache-actions button {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      background: var(--item);
+      color: var(--text);
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .cache-actions button.primary {
+      background: var(--button-bg);
+      color: white;
+      border-color: var(--button-bg);
+    }
+
     /* RESPONSIVE */
     @media (max-width: 768px) {
       .sidebar {
@@ -886,6 +967,13 @@
       
       .repo-browser {
         max-height: 250px;
+      }
+      
+      .cache-info {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+        text-align: center;
       }
     }
   </style>
@@ -901,6 +989,11 @@
       <button onclick="clearSearch()">✕</button>
     </div>
   </div>
+</div>
+
+<!-- OFFLINE INDICATOR -->
+<div class="offline-indicator" id="offlineIndicator">
+  Anda sedang offline. Menggunakan data cache lokal.
 </div>
 
 <!-- IMAGE MODAL -->
@@ -995,12 +1088,14 @@
     </div>
   </div>
   
-  <!-- Data Online -->
+  <!-- Cache Management -->
   <div class="section">
-    <div class="section-title" onclick="toggleSection(this)">Data Online <span>🔽</span></div>
+    <div class="section-title" onclick="toggleSection(this)">Manajemen Cache <span>🔽</span></div>
     <div class="section-content">
-      <button class="btn" onclick="saveOnlineToOffline()">Simpan ke Offline</button>
-      <button class="btn" onclick="loadOnline(true)">Reload</button>
+      <button class="btn info" onclick="loadOnlineDataToCache()">Load Online ke Cache</button>
+      <button class="btn" onclick="clearAppCache()">Bersihkan Cache</button>
+      <button class="btn warning" onclick="checkCacheStatus()">Status Cache</button>
+      <div class="status-message" id="cacheStatusMsg"></div>
     </div>
   </div>
   
@@ -1019,6 +1114,18 @@
 <!-- UPLOAD INDICATOR -->
 <div class="upload-indicator" id="uploadIndicator">
   Mengunggah ke GitHub...
+</div>
+
+<!-- CACHE INFO BAR -->
+<div class="cache-info" id="cacheInfo">
+  <div class="cache-status">
+    <span class="indicator" id="networkIndicator"></span>
+    <span id="cacheStatusText">Memeriksa koneksi...</span>
+  </div>
+  <div class="cache-actions">
+    <button onclick="loadOnlineDataToCache()" id="loadCacheBtn">Load Online</button>
+    <button onclick="clearAppCache()" class="primary">Bersihkan Cache</button>
+  </div>
 </div>
 
 <!-- TAB -->
@@ -1043,11 +1150,18 @@ const searchInput = document.getElementById('searchInput');
 const imageModal = document.getElementById('imageModal');
 const modalImage = document.getElementById('modalImage');
 const imageCounter = document.getElementById('imageCounter');
+const offlineIndicator = document.getElementById('offlineIndicator');
+const cacheInfo = document.getElementById('cacheInfo');
+const networkIndicator = document.getElementById('networkIndicator');
+const cacheStatusText = document.getElementById('cacheStatusText');
+const loadCacheBtn = document.getElementById('loadCacheBtn');
+const cacheStatusMsg = document.getElementById('cacheStatusMsg');
 
 // Main app data
 let dataOffline = JSON.parse(localStorage.getItem('data_offline') || '[]');
-let dataOnline = [];
-let onlineSHA = '';
+let dataOnline = []; // Data yang sedang ditampilkan
+let onlineCache = JSON.parse(localStorage.getItem('data_online_cache') || '[]'); // Cache data online
+let onlineSHA = localStorage.getItem('online_sha_cache') || '';
 let isEditMode = false;
 let currentEditCardId = null;
 let currentEditMode = null;
@@ -1055,6 +1169,11 @@ let currentSearchQuery = '';
 let currentModalImages = [];
 let currentModalIndex = 0;
 let currentModalCardId = null;
+
+// Network status
+let isOnline = navigator.onLine;
+let lastCacheUpdate = localStorage.getItem('last_cache_update') || 'Belum pernah';
+let cacheSize = 0;
 
 // ======================== GITHUB BROWSE VARIABLES ========================
 const modeTabs = document.querySelectorAll('.mode-tab');
@@ -1078,6 +1197,202 @@ const filePathInput = document.getElementById('filePath');
 let repositories = [];
 let currentBrowseMode = 'type';
 let lastSelectedPath = '-';
+
+// ======================== NETWORK & CACHE MANAGEMENT ========================
+
+// Update network status
+function updateNetworkStatus() {
+  isOnline = navigator.onLine;
+  
+  if (isOnline) {
+    networkIndicator.className = 'indicator online';
+    cacheStatusText.textContent = `Online | Cache: ${onlineCache.length} item | Update: ${lastCacheUpdate}`;
+    offlineIndicator.classList.remove('active');
+    loadCacheBtn.disabled = false;
+  } else {
+    networkIndicator.className = 'indicator offline';
+    cacheStatusText.textContent = `Offline | Menggunakan cache: ${onlineCache.length} item`;
+    offlineIndicator.classList.add('active');
+    loadCacheBtn.disabled = true;
+    
+    // Jika offline, gunakan cache untuk data online
+    if (document.querySelector('.tab.active').dataset.tab === 'Online') {
+      dataOnline = [...onlineCache];
+      renderCards('online');
+    }
+  }
+  
+  // Update cache size
+  updateCacheSize();
+}
+
+// Update cache size info
+function updateCacheSize() {
+  try {
+    const cacheData = localStorage.getItem('data_online_cache');
+    cacheSize = cacheData ? new Blob([cacheData]).size : 0;
+    
+    // Update cache info
+    if (isOnline) {
+      cacheStatusText.textContent = `Online | Cache: ${onlineCache.length} item (${formatBytes(cacheSize)}) | Update: ${lastCacheUpdate}`;
+    } else {
+      cacheStatusText.textContent = `Offline | Cache: ${onlineCache.length} item (${formatBytes(cacheSize)})`;
+    }
+  } catch (e) {
+    console.error('Error calculating cache size:', e);
+  }
+}
+
+// Format bytes to human readable
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+// Load online data to cache (manual cache update)
+async function loadOnlineDataToCache() {
+  if (!isOnline) {
+    showCacheStatus('Tidak dapat memuat data: Anda sedang offline', 'error');
+    return;
+  }
+  
+  const pat = localStorage.getItem('setting_pat') || '';
+  const username = localStorage.getItem('setting_username') || '';
+  const repoPath = localStorage.getItem('setting_repoPath') || '';
+  const filePath = localStorage.getItem('setting_filePath') || '';
+  
+  if (!pat && !username) {
+    showCacheStatus("Untuk memuat data online, isi Username (wajib jika tanpa PAT) atau PAT.", 'error');
+    return;
+  }
+  
+  if (!repoPath || !filePath) {
+    showCacheStatus("Pengaturan GitHub belum lengkap.", 'error');
+    return;
+  }
+  
+  try {
+    showCacheStatus('Memuat data dari GitHub ke cache...', 'loading');
+    loadCacheBtn.disabled = true;
+    loadCacheBtn.textContent = 'Loading...';
+    
+    const owner = username || await getUsernameFromPAT(pat);
+    const repo = repoPath.split('/')[0];
+    const path = filePath;
+    
+    const headers = { 
+      "Accept": "application/vnd.github.v3+json"
+    };
+    if (pat) headers["Authorization"] = `Bearer ${pat}`;
+    
+    const rawUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    const res = await fetch(rawUrl, { headers });
+    
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new Error("File tidak ditemukan di repository.");
+      }
+      throw new Error(`Gagal memuat: ${res.status} ${res.statusText}`);
+    }
+    
+    const fileData = await res.json();
+    const content = atob(fileData.content.replace(/\s/g, ''));
+    let loadedData = JSON.parse(content);
+    
+    if (!Array.isArray(loadedData)) {
+      throw new Error("Data bukan array");
+    }
+    
+    // Validasi dan normalisasi data
+    loadedData = loadedData.map(item => ({
+      id: item.id || Date.now() + Math.random(),
+      title: item.title || 'Tanpa Judul',
+      info: Array.isArray(item.info) ? item.info : [],
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      links: Array.isArray(item.links) ? item.links : [],
+      images: Array.isArray(item.images) ? item.images : []
+    }));
+    
+    // Simpan ke cache
+    onlineCache = loadedData;
+    onlineSHA = fileData.sha;
+    lastCacheUpdate = new Date().toLocaleString();
+    
+    localStorage.setItem('data_online_cache', JSON.stringify(onlineCache));
+    localStorage.setItem('online_sha_cache', onlineSHA);
+    localStorage.setItem('last_cache_update', lastCacheUpdate);
+    
+    // Update tampilan jika sedang di tab Online
+    if (document.querySelector('.tab.active').dataset.tab === 'Online') {
+      dataOnline = [...onlineCache];
+      renderCards('online');
+    }
+    
+    showCacheStatus(`Cache diperbarui: ${onlineCache.length} item tersimpan`, 'success');
+    updateNetworkStatus();
+    
+  } catch (error) {
+    console.error('Error loading to cache:', error);
+    showCacheStatus("Gagal memuat cache: " + error.message, 'error');
+  } finally {
+    loadCacheBtn.disabled = false;
+    loadCacheBtn.textContent = 'Load Online';
+    setTimeout(() => {
+      cacheStatusMsg.className = 'status-message';
+      cacheStatusMsg.textContent = '';
+    }, 3000);
+  }
+}
+
+// Show cache status message
+function showCacheStatus(message, type = 'info') {
+  cacheStatusMsg.textContent = message;
+  cacheStatusMsg.className = `status-message ${type}`;
+}
+
+// Check cache status
+function checkCacheStatus() {
+  const cacheData = localStorage.getItem('data_online_cache');
+  const hasCache = cacheData && cacheData !== '[]';
+  
+  let status = `Status Cache:\n`;
+  status += `• Online cache: ${hasCache ? 'ADA' : 'TIDAK ADA'}\n`;
+  status += `• Item dalam cache: ${onlineCache.length}\n`;
+  status += `• Update terakhir: ${lastCacheUpdate}\n`;
+  status += `• Ukuran cache: ${formatBytes(cacheSize)}\n`;
+  status += `• Status jaringan: ${isOnline ? 'ONLINE' : 'OFFLINE'}`;
+  
+  alert(status);
+}
+
+// Clear app cache
+function clearAppCache() {
+  if (confirm('Hapus semua cache? Data offline TIDAK akan terhapus.')) {
+    localStorage.removeItem('data_online_cache');
+    localStorage.removeItem('online_sha_cache');
+    localStorage.removeItem('last_cache_update');
+    
+    onlineCache = [];
+    onlineSHA = '';
+    lastCacheUpdate = 'Belum pernah';
+    
+    // Jika sedang di tab Online, update tampilan
+    if (document.querySelector('.tab.active').dataset.tab === 'Online') {
+      dataOnline = [];
+      renderCards('online');
+    }
+    
+    showCacheStatus('Cache berhasil dibersihkan', 'success');
+    updateNetworkStatus();
+  }
+}
 
 // ======================== MAIN APP FUNCTIONS ========================
 
@@ -1150,7 +1465,19 @@ function switchTab(el) {
     addBtn.style.display = "block";
     addBtn.textContent = "Tambahkan Konten (Online)";
     addBtn.onclick = () => addNewCard('online');
-    loadOnline(true);
+    
+    // Gunakan cache jika ada, atau load dari online jika tersedia
+    if (onlineCache.length > 0) {
+      dataOnline = [...onlineCache];
+      renderCards('online');
+    } else if (isOnline) {
+      // Coba load online jika belum ada cache
+      loadOnline(true);
+    } else {
+      // Offline dan tidak ada cache
+      dataOnline = [];
+      renderCards('online');
+    }
   }
 }
 
@@ -1438,21 +1765,34 @@ function addNewCard(mode) {
     renderCards('offline');
     alert('Konten baru ditambahkan ke data offline (disimpan di localStorage)');
   } else {
+    // Tambah ke data online dan cache
     dataOnline.push(newCard);
-    // Langsung upload ke GitHub untuk konten baru di mode online
-    showUploadIndicator();
-    uploadOnlineToGithub()
-      .then(() => {
-        hideUploadIndicator();
-        renderCards('online');
-      })
-      .catch(error => {
-        hideUploadIndicator();
-        alert('Gagal menambahkan konten baru: ' + error.message);
-        // Hapus dari dataOnline jika gagal upload
-        dataOnline = dataOnline.filter(c => c.id !== newCard.id);
-        renderCards('online');
-      });
+    onlineCache.push(newCard);
+    
+    // Simpan cache
+    localStorage.setItem('data_online_cache', JSON.stringify(onlineCache));
+    lastCacheUpdate = new Date().toLocaleString();
+    localStorage.setItem('last_cache_update', lastCacheUpdate);
+    
+    renderCards('online');
+    updateNetworkStatus();
+    
+    // Upload ke GitHub jika online
+    if (isOnline) {
+      showUploadIndicator();
+      uploadOnlineToGithub()
+        .then(() => {
+          hideUploadIndicator();
+          alert('Konten baru ditambahkan dan diunggah ke GitHub');
+        })
+        .catch(error => {
+          hideUploadIndicator();
+          console.error('Upload gagal:', error);
+          // Konten tetap tersimpan di cache lokal
+        });
+    } else {
+      alert('Konten baru ditambahkan ke cache lokal. Akan diupload saat online.');
+    }
   }
 }
 
@@ -1460,8 +1800,16 @@ function saveDataOffline() {
   localStorage.setItem('data_offline', JSON.stringify(dataOffline));
 }
 
-// --- LOAD DATA ONLINE DARI GITHUB ---
+// --- LOAD DATA ONLINE DARI GITHUB (untuk real-time, bukan cache) ---
 async function loadOnline(forceReload = false) {
+  if (!isOnline) {
+    // Gunakan cache jika offline
+    dataOnline = [...onlineCache];
+    renderCards('online');
+    showError("Anda sedang offline. Menggunakan data cache.");
+    return;
+  }
+  
   cardContainer.innerHTML = '<div class="loading">Memuat data online...</div>';
   
   const pat = localStorage.getItem('setting_pat') || '';
@@ -1521,6 +1869,7 @@ async function loadOnline(forceReload = false) {
         images: Array.isArray(item.images) ? item.images : []
       }));
       
+      // JANGAN otomatis simpan ke cache - hanya tampilkan
       renderCards('online');
       
     } catch (parseError) {
@@ -1531,6 +1880,12 @@ async function loadOnline(forceReload = false) {
   } catch (err) {
     console.error('Error loading online data:', err);
     showError("Gagal Memuat: " + err.message);
+    
+    // Fallback ke cache jika ada
+    if (onlineCache.length > 0) {
+      dataOnline = [...onlineCache];
+      renderCards('online');
+    }
   }
 }
 
@@ -1561,6 +1916,10 @@ async function uploadOnlineToGithub() {
   const username = localStorage.getItem('setting_username') || '';
   const repoPath = localStorage.getItem('setting_repoPath') || '';
   const filePath = localStorage.getItem('setting_filePath') || '';
+  
+  if (!isOnline) {
+    throw new Error('Anda sedang offline. Tidak dapat mengunggah ke GitHub.');
+  }
   
   if (!pat) {
     throw new Error('Diperlukan PAT untuk mengunggah perubahan ke GitHub!');
@@ -1606,6 +1965,16 @@ async function uploadOnlineToGithub() {
   if (uploadRes.ok) {
     const result = await uploadRes.json();
     onlineSHA = result.content.sha;
+    
+    // Update cache dengan data yang baru diupload
+    onlineCache = [...dataOnline];
+    localStorage.setItem('data_online_cache', JSON.stringify(onlineCache));
+    localStorage.setItem('online_sha_cache', onlineSHA);
+    lastCacheUpdate = new Date().toLocaleString();
+    localStorage.setItem('last_cache_update', lastCacheUpdate);
+    
+    updateNetworkStatus();
+    
     return result;
   } else {
     const error = await uploadRes.text();
@@ -1630,7 +1999,22 @@ function renderCards(mode) {
   if (data.length === 0) {
     const emptyMsg = document.createElement('div');
     emptyMsg.className = 'loading';
-    emptyMsg.textContent = mode === 'offline' ? 'Belum ada data offline' : 'Belum ada data online';
+    
+    if (mode === 'offline') {
+      emptyMsg.textContent = 'Belum ada data offline';
+    } else {
+      if (!isOnline && onlineCache.length === 0) {
+        emptyMsg.innerHTML = `
+          <div style="margin-bottom: 10px;">📴 Anda sedang offline</div>
+          <div style="font-size: 12px; color: #666;">Tidak ada data cache. Load data saat online.</div>
+        `;
+      } else if (!isOnline) {
+        emptyMsg.textContent = 'Cache kosong. Load data saat online.';
+      } else {
+        emptyMsg.textContent = 'Belum ada data online';
+      }
+    }
+    
     cardContainer.appendChild(emptyMsg);
     return;
   }
@@ -2317,17 +2701,32 @@ function saveEdit(id, mode) {
     renderCards('offline');
     alert('Perubahan disimpan di data offline (localStorage)');
   } else {
-    showUploadIndicator();
-    uploadOnlineToGithub()
-      .then(() => {
-        hideUploadIndicator();
-        renderCards('online');
-      })
-      .catch(error => {
-        hideUploadIndicator();
-        alert('Gagal mengunggah perubahan: ' + error.message);
-        renderCards('online');
-      });
+    // Update cache
+    const cacheIndex = onlineCache.findIndex(c => c.id === id);
+    if (cacheIndex !== -1) {
+      onlineCache[cacheIndex] = { ...card };
+      localStorage.setItem('data_online_cache', JSON.stringify(onlineCache));
+      lastCacheUpdate = new Date().toLocaleString();
+      localStorage.setItem('last_cache_update', lastCacheUpdate);
+      updateNetworkStatus();
+    }
+    
+    if (isOnline) {
+      showUploadIndicator();
+      uploadOnlineToGithub()
+        .then(() => {
+          hideUploadIndicator();
+          renderCards('online');
+        })
+        .catch(error => {
+          hideUploadIndicator();
+          alert('Gagal mengunggah perubahan: ' + error.message);
+          renderCards('online');
+        });
+    } else {
+      alert('Perubahan disimpan di cache lokal. Akan diupload saat online.');
+      renderCards('online');
+    }
   }
 }
 
@@ -2344,18 +2743,34 @@ function deleteCard(id, mode) {
     const originalLength = dataOnline.length;
     dataOnline = dataOnline.filter(c => c.id !== id);
     
+    // Update cache
+    const cacheOriginalLength = onlineCache.length;
+    onlineCache = onlineCache.filter(c => c.id !== id);
+    
+    if (onlineCache.length < cacheOriginalLength) {
+      localStorage.setItem('data_online_cache', JSON.stringify(onlineCache));
+      lastCacheUpdate = new Date().toLocaleString();
+      localStorage.setItem('last_cache_update', lastCacheUpdate);
+      updateNetworkStatus();
+    }
+    
     if (dataOnline.length < originalLength) {
-      showUploadIndicator();
-      uploadOnlineToGithub()
-        .then(() => {
-          hideUploadIndicator();
-          renderCards('online');
-        })
-        .catch(error => {
-          hideUploadIndicator();
-          alert('Gagal mengunggah perubahan: ' + error.message);
-          loadOnline(true);
-        });
+      if (isOnline) {
+        showUploadIndicator();
+        uploadOnlineToGithub()
+          .then(() => {
+            hideUploadIndicator();
+            renderCards('online');
+          })
+          .catch(error => {
+            hideUploadIndicator();
+            alert('Gagal mengunggah perubahan: ' + error.message);
+            renderCards('online');
+          });
+      } else {
+        alert('Konten dihapus dari cache lokal. Akan diupload saat online.');
+        renderCards('online');
+      }
     } else {
       renderCards('online');
     }
@@ -2384,8 +2799,10 @@ function setBrowseMode(mode) {
   // If switching to browse mode, auto-load if token exists
   if (mode === 'browse') {
     const pat = document.getElementById('pat').value.trim();
-    if (pat && repositories.length === 0) {
+    if (pat && repositories.length === 0 && isOnline) {
       setTimeout(() => loadRepositories(), 100);
+    } else if (!isOnline) {
+      showBrowseStatus('Tidak dapat memuat repositori: Anda sedang offline', 'error');
     }
     // Update selected path from settings
     updateSelectedPathFromSettings();
@@ -2535,6 +2952,11 @@ async function loadDirectoryContent(item, parentNode) {
   const pat = document.getElementById('pat').value.trim();
   if (!pat) return;
   
+  if (!isOnline) {
+    showBrowseStatus('Tidak dapat memuat direktori: Anda sedang offline', 'error');
+    return;
+  }
+  
   try {
     showBrowseStatus('Memuat direktori...', 'loading');
     
@@ -2592,6 +3014,11 @@ async function loadDirectoryContent(item, parentNode) {
 // Load repositories from GitHub API
 async function loadRepositories() {
   const pat = document.getElementById('pat').value.trim();
+  
+  if (!isOnline) {
+    showBrowseStatus('Tidak dapat memuat repositori: Anda sedang offline', 'error');
+    return;
+  }
   
   if (!pat) {
     showBrowseStatus('Silakan masukkan GitHub Personal Access Token', 'error');
@@ -2737,6 +3164,18 @@ function toggleDarkMode() {
 // ======================== INITIALIZATION ========================
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize network status
+  updateNetworkStatus();
+  
+  // Network status listeners
+  window.addEventListener('online', () => {
+    updateNetworkStatus();
+  });
+  
+  window.addEventListener('offline', () => {
+    updateNetworkStatus();
+  });
+  
   // Initialize main app
   const offlineTab = document.querySelector('.tab[data-tab="Offline"]');
   switchTab(offlineTab);
@@ -2769,7 +3208,7 @@ window.addEventListener('DOMContentLoaded', () => {
   updateSelectedPathFromSettings();
   
   // Auto-load repositories if PAT exists and in browse mode
-  if (savedBrowseMode === 'browse') {
+  if (savedBrowseMode === 'browse' && isOnline) {
     const pat = document.getElementById('pat').value.trim();
     if (pat) {
       setTimeout(() => loadRepositories(), 500);
